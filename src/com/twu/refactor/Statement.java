@@ -1,49 +1,52 @@
 package com.twu.refactor;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
  * Created by dollyg on 3/17/2015.
  */
 public class Statement {
-    Customer customer;
+    private Billable billable;
 
-    public Statement(Customer customer) {
-        this.customer = customer;
+    public Statement(Billable billable) {
+        this.billable = billable;
     }
 
+    private String getBody(String BODY) {
+        Map<Movie,Double> rentalSummary = billable.getRentalSummary();
+        String textRentalSummary = "";
+        for (Movie movie : rentalSummary.keySet()){
+            String template = new String(BODY);
+            textRentalSummary += template.replace("#{movie}",movie.getTitle())
+                    .replace("#{amount}",rentalSummary.get(movie)+"");
+        }
+        return textRentalSummary;
+    }
+
+    private String getHeader(String HEADER) {
+        return HEADER.replace("#{customer}",billable.getName());
+    }
+
+    private String getFooter(String FOOTER) {
+        return FOOTER.replace("#{amount}", billable.getTotalAmount()+"")
+                .replace("#{frp}", billable.getFrequentRenterPoints() + "");
+    }
 
     @Override
     public String toString() {
-        Map<String, Object> summary = customer.calculateRentalSubTotal();
-        Map<String,Double> rentalSubTotal = (Map<String,Double>)summary.get("rentalSubTotal");
-        String textStatement = "Rental Record for #{customerName}\n#{rentalSummary}" +
-                "Amount owed is #{amount}\nYou earned #{frequentRenterPoints} frequent renter" +
-                " points";
-        String rentalSummaryTemplate = "\t#{movie}\t#{amount}\n";
-        String rentalSummary = "";
-        textStatement = textStatement.replace("#{customerName}",customer.getName());
-        for (String movie : rentalSubTotal.keySet()){
-            rentalSummary += rentalSummaryTemplate.replace("#{movie}",movie).replace("#{amount}",rentalSubTotal.get(movie)+"");
-        }
-        textStatement = textStatement.replace("#{rentalSummary}",rentalSummary);
-        textStatement = textStatement.replace("#{amount}",summary.get("amount")+"").replace("#{frequentRenterPoints}",summary.get("frequentRenterPoints")+"");
-        return textStatement;
+        String HEADER = "Rental Record for #{customer}";
+        String FOOTER = "Amount owed is #{amount}\nYou earned #{frp} frequent renter points";
+        String RENTAL_SUMMARY = "\t#{movie}\t#{amount}\n";
+        return getHeader(HEADER) + "\n" + getBody(RENTAL_SUMMARY) + getFooter(FOOTER) ;
     }
 
     public String toHTML() {
-        Map<String, Object> summary = customer.calculateRentalSubTotal();
-        Map<String,Double> rentalSubTotal = (Map<String,Double>)summary.get("rentalSubTotal");
-        String statement = "<H1>Rentals for <EM>" + customer.getName() + "</EM></H1><P>";
-        for (String movie : rentalSubTotal.keySet()){
-            statement += movie + ": " + rentalSubTotal.get(movie) + "<BR>";
-        }
-        statement += "<P>" + "You owe <EM>" + summary.get("amount") + "</EM>" +
-            "<P>On this rental you earned <EM>" + summary.get("frequentRenterPoints") +
-            "</EM> frequent renter points<P>";
-        return statement;
+        String HEADER = "<H1>Rentals for <EM>#{customer}</EM></H1><P>";
+        String RENTAL_SUMMARY = "#{movie}: #{amount}<BR>";
+        String FOOTER = "<P>You owe <EM>#{amount}</EM><P>On this rental you earned <EM>" +
+                "#{frp}</EM> frequent renter points<P>";
+
+        return getHeader(HEADER) + getBody(RENTAL_SUMMARY) + getFooter(FOOTER);
     }
 }
+

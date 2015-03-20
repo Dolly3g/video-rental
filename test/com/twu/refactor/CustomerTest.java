@@ -52,5 +52,4 @@ public class CustomerTest extends TestCase {
             assertEquals ("in file: " + fileName, thisFileLine, actualStream.readLine());
         }
     }
-
 }
